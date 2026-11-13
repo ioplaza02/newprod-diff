@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新商品 差分カレンダー</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1b2f57; --navy2:#2a4478; --green:#1f9d6b; --green-bg:#e6f6ef; --red:#c8412f;
+    --diff:#fff3cd; --diff-line:#e0a800; --add:#e3f0ff; --add-line:#3d7bd9; --note:#eef1f6;
+    --ink:#1d2433; --sub:#5b6577; --line:#dfe3ea; --bg:#f3f5f9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Noto Sans JP",sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.6}
+  a{color:var(--navy2)}
+  /* ---------- password gate ---------- */
+  body.locked > :not(#gate){display:none !important}
+  #gate{display:none;position:fixed;inset:0;background:var(--navy);z-index:100;align-items:center;justify-content:center;padding:20px}
+  body.locked #gate{display:flex}
+  .gbox{background:#fff;border-radius:14px;padding:28px 26px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .gbox .gi{font-size:13px;color:#b07d00;font-weight:700}
+  .gbox h2{margin:4px 0 14px;font-size:19px;color:var(--navy)}
+  .gbox input{width:100%;padding:10px 12px;font-size:16px;border:1px solid var(--line);border-radius:8px;font-family:inherit}
+  .gbox button{margin-top:10px;width:100%;padding:10px;font-size:15px;border:0;border-radius:8px;background:var(--green);color:#fff;font-family:inherit;cursor:pointer}
+  .gbox .gerr{color:var(--red);font-size:13px;min-height:20px;margin-top:6px}
+  .gbox .gnote{font-size:12px;color:var(--sub);margin-top:6px}
+  /* ---------- top band ---------- */
+  .topband{background:#0f1d3a;color:#fff;font-size:13px;padding:6px 24px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .topband .internal{font-weight:700;letter-spacing:.05em;color:#ffd166}
+  .req{background:#fff;border:1px solid var(--line);border-left:5px solid var(--green);border-radius:10px;padding:12px 16px;font-size:14px;margin:0 0 16px}
+  .req > b:first-child{display:block;color:var(--green);margin-bottom:2px}
+  .src{font-size:13px;color:var(--sub);background:#fff;border:1px solid var(--line);border-left:5px solid #9aa3b2;border-radius:10px;padding:10px 16px;margin:0 0 16px}
+  .src b{display:block;color:var(--ink);margin-bottom:2px}
+  /* ---------- header ---------- */
+  header{background:var(--navy);color:#fff;padding:20px 24px 18px}
+  .hwrap{max-width:1150px;margin:0 auto;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+  header h1{margin:0;font-size:22px;letter-spacing:.06em;font-weight:900}
+  header h1 small{display:block;font-size:12px;font-weight:400;letter-spacing:.02em;opacity:.8;margin-top:2px}
+  .today{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px 14px;font-size:13px;line-height:1.5}
+  .today b{font-size:16px}
+  .wrap{max-width:1150px;margin:0 auto;padding:20px}
+  .lead{font-size:13px;color:var(--sub);margin:0 0 14px}
+  /* ---------- calendar strip ---------- */
+  .cal{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px;margin-bottom:22px;overflow-x:auto}
+  .cal-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .cal-title span{font-weight:400;color:var(--sub)}
+  .days{display:grid;gap:2px}
+  .day{border-radius:6px;padding:4px 0 6px;text-align:center;font-size:12px;color:var(--sub);background:#f7f8fb;position:relative;min-height:58px}
+  .day .m{font-size:10px;height:14px;color:var(--navy);font-weight:700}
+  .day .d{font-size:14px;font-weight:700;color:var(--ink)}
+  .day .w{font-size:10px}
+  .day.sun .w,.day.sun .d{color:var(--red)} .day.sat .w,.day.sat .d{color:var(--navy2)}
+  .day.today{outline:2px solid var(--navy);background:#fff}
+  .day.has{background:var(--green-bg);cursor:pointer}
+  .day.has:hover{background:#d3efe3}
+  .day .dot{display:inline-block;margin-top:2px;min-width:18px;padding:0 4px;border-radius:9px;background:var(--green);color:#fff;font-size:10px;font-weight:700;line-height:16px}
+  .day .dot.gray{background:#9aa3b2}
+  .day.edge{background:#fdecea}
+  .cal-legend{font-size:11px;color:var(--sub);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+  .cal-legend i{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:4px;vertical-align:-1px}
+  /* ---------- date groups ---------- */
+  .group{display:flex;gap:18px;margin-bottom:26px;scroll-margin-top:10px}
+  .tile{flex:0 0 86px;height:96px;border-radius:10px;overflow:hidden;background:#fff;border:1px solid var(--line);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);position:sticky;top:12px}
+  .tile .tm{background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:2px 0}
+  .tile .td{font-size:34px;font-weight:900;line-height:1.2;margin-top:4px}
+  .tile .tw{font-size:12px;color:var(--sub)}
+  .gbody{flex:1;min-width:0}
+  .ginfo{font-size:13px;color:var(--sub);margin:2px 0 10px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+  .ginfo b{color:var(--ink)}
+  .bar{width:140px;height:6px;background:#e3e7ee;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle}
+  .bar i{display:block;height:100%;background:var(--green)}
+  .bar.late i{background:var(--red)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:8px}
+  .card:hover{border-color:var(--navy2);box-shadow:0 4px 14px rgba(27,47,87,.1)}
+  .card .cat{font-size:12px;color:var(--sub)}
+  .imgs{display:flex;align-items:center;gap:6px}
+  .imgs figure{margin:0;text-align:center;flex:1}
+  .imgs img{width:100%;max-width:120px;aspect-ratio:1/1;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px}
+  .imgs figure.old img{max-width:96px;opacity:.75;filter:saturate(.6)}
+  .imgs figcaption{font-size:11px;color:var(--sub);margin-top:2px}
+  .imgs figcaption b{display:block;font-size:13px;color:var(--ink)}
+  .imgs .arrow{color:var(--green);font-size:22px;font-weight:900}
+  .samepic{font-size:11px;color:var(--sub);text-align:center}
+  .badges{display:flex;flex-wrap:wrap;gap:4px}
+  .badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--diff);border:1px solid var(--diff-line)}
+  .badge.add{background:var(--add);border-color:var(--add-line)}
+  .badge.how{background:#fff;border-color:var(--line);color:var(--sub)}
+  .badge.how.official{border-color:var(--green);color:var(--green)}
+  .badge.warn{background:#fdecea;border-color:#e8a59b;color:var(--red)}
+  /* ---------- unmatched ---------- */
+  .unm{background:#fff;border:1px dashed #b9c1ce;border-radius:12px;padding:16px 18px;margin-top:6px}
+  .unm h2{margin:0 0 4px;font-size:15px;color:var(--navy)}
+  .unm p{margin:0 0 8px;font-size:13px;color:var(--sub)}
+  .unm ul{margin:0;padding:0;list-style:none}
+  .unm li{padding:6px 0;border-top:1px solid var(--line);font-size:14px;display:flex;gap:12px}
+  .unm li span{color:var(--sub);font-size:13px;flex:0 0 64px}
+  /* ---------- modal ---------- */
+  .ov{position:fixed;inset:0;background:rgba(15,24,45,.55);display:none;z-index:50;overflow-y:auto;padding:24px 12px}
+  .ov.open{display:block}
+  .modal{max-width:1100px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .mhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
+  .mhead h2{margin:0 0 4px;font-size:19px}
+  .mhead .meta{font-size:13px;color:var(--sub)}
+  .close{flex:0 0 auto;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--navy2);background:#fff;color:var(--navy2);cursor:pointer;font-family:inherit}
+  .close:hover{background:var(--navy2);color:#fff}
+  .mimgs{display:flex;gap:24px;align-items:center;justify-content:center;padding:16px 20px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  .mimgs figure{margin:0;text-align:center}
+  .mimgs img{width:180px;height:180px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .mimgs figcaption{font-size:13px;margin-top:4px;color:var(--ink)}
+  .mimgs a{text-decoration:none;display:block;border-radius:12px;padding:4px;transition:.15s}
+  .mimgs a img{transition:.15s}
+  .mimgs a:hover img{border-color:var(--navy2);box-shadow:0 4px 14px rgba(27,47,87,.18)}
+  .mimgs .golink{display:block;font-size:12px;color:var(--navy2);text-decoration:underline}
+  .mimgs .arrow{color:var(--green);font-size:30px;font-weight:900}
+  .infobox{margin:14px 20px 0;padding:12px 16px;border-radius:8px;font-size:14px;background:var(--note)}
+  .infobox.warn{background:#fdecea;color:#7a2a1e}
+  .infobox b{color:var(--navy)}
+  .infobox .empty{color:#b3261e;font-weight:500}
+  .lineup{display:grid;grid-template-columns:auto 1fr;gap:2px 12px}
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:10px 20px;margin-top:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fafbfc}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;user-select:none}
+  .legend{font-size:12px;color:var(--sub);display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
+  .legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+  .legend .l-diff::before{background:var(--diff);border:1px solid var(--diff-line)}
+  .legend .l-add::before{background:var(--add);border:1px solid var(--add-line)}
+  .legend .l-note::before{background:var(--note);border:1px solid #c5ccd8}
+  .legend .l-same::before{background:#fff;border:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  thead th{background:var(--navy);color:#fff;font-weight:500}
+  thead th.newcol{background:var(--green)}
+  td.item{width:19%;color:var(--sub);font-weight:500}
+  td.val{width:31%;white-space:pre-wrap;word-break:break-word}
+  td.mark{width:19%;font-size:12px;font-weight:700}
+  td.none{color:#9aa3b2;font-style:italic}
+  tr.diff td.val,tr.diff td.mark{background:var(--diff)} tr.diff td.mark{color:#8a5a00}
+  tr.add td.val,tr.add td.mark,tr.del td.val,tr.del td.mark{background:var(--add)} tr.add td.mark,tr.del td.mark{color:#1f4f99}
+  tr.note td.val,tr.note td.mark{background:var(--note)} tr.note td.mark{color:var(--sub);font-weight:500}
+  tr.same td.mark{color:var(--green);font-weight:500}
+  .hint{font-size:12px;color:var(--sub);font-weight:400;display:block;margin-top:2px}
+  .rename{font-size:11px;color:var(--sub);font-weight:400;display:block}
+  .fn{display:block;margin-top:4px;padding:4px 8px;font-size:12px;color:#4a5568;background:rgba(27,47,87,.06);border-radius:4px;white-space:normal}
+  .gtitle{margin:0;padding:14px 20px 8px;font-size:15px;color:var(--navy);border-top:1px solid var(--line)}
+  .gtitle span{font-size:12px;color:var(--sub);font-weight:400;margin-left:8px}
+  .gtable td.val{width:40%;white-space:normal}
+  .copybar{padding:14px 20px 18px;display:flex;gap:10px;align-items:center}
+  .copybtn{font-family:inherit;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--navy2);background:#fff;color:var(--navy2);cursor:pointer}
+  .copybtn:hover{background:var(--navy2);color:#fff}
+  .copied{font-size:13px;color:var(--green)}
+  footer{font-size:12px;color:var(--sub);padding:6px 20px 30px;max-width:1150px;margin:0 auto}
+  @media (max-width:700px){
+    .group{flex-direction:column;gap:8px} .tile{position:static;flex:none;width:86px;height:auto;padding-bottom:6px}
+    td.item{width:auto} .legend{margin-left:0} th,td{padding:8px} .mimgs img{width:120px;height:120px}
+  }
+</style>
+</head>
+<body class="locked">
+<div id="gate"><form class="gbox" id="gform">
+  <div class="gi">【社内限定】</div>
+  <h2>新商品 差分カレンダー</h2>
+  <input type="password" id="gpw" placeholder="パスワードを入力" autocomplete="current-password" aria-label="パスワード">
+  <button type="submit">表示する</button>
+  <div class="gerr" id="gerr"></div>
+  <div class="gnote">お問い合わせ先：IS課 西川</div>
+</form></div>
+<div class="topband"><span class="internal">【社内限定】</span><span>お問い合わせ先：IS課 西川</span></div>
+<header><div class="hwrap">
+  <h1>新商品 差分カレンダー<small>直近60日に発表された新商品を見つけて、旧型との違いを自動で並べます</small></h1>
+  <div class="today" id="today"></div>
+</div></header>
+
+<div class="wrap">
+  <p class="lead">公式サイトの新商品ニュースから新商品を拾い、旧型を探して、仕様表の原文どうしを項目ごとに突き合わせています。発表から60日たった商品は一覧から外れます。カードを押すと違いの一覧が開きます。</p>
+  <div class="req"><b>比較のご要望を受け付けています</b>「この新商品とこの商品を比べたい」「旧型が見つからない新商品の比較も見たい」などのご要望は、<b>IS課 西川</b>までお知らせください。</div>
+  <div class="src"><b>掲載内容の出どころ</b>このページの内容は、すべて当社公式サイトで公開されている情報（商品ページ・仕様ページ・ニュースリリース・商品画像）から取得したものです。社内資料などの非公開情報は使っていません。</div>
+  <div class="cal" id="cal"></div>
+  <div id="groups"></div>
+  <div class="unm" id="unm"></div>
+</div>
+<footer id="foot"></footer>
+
+<div class="ov" id="ov"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+
+<script>
+/* パスワード画面：入力値のハッシュ（SHA-256）を比べるだけの簡易的な鍵です */
+(function(){
+  const HASH = "e9f61d783cd00b1a00763845619c443b438d92a11b8642c957adbd04fffe4e88", KEY = "newprod-diff-unlocked";
+  const unlock = () => document.body.classList.remove("locked");
+  try { if (localStorage.getItem(KEY) === HASH) unlock(); } catch(e) {}
+  document.getElementById("gform").addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = document.getElementById("gpw").value;
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
+    const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+    if (hex === HASH) { try { localStorage.setItem(KEY, HASH); } catch(e) {} unlock(); }
+    else document.getElementById("gerr").textContent = "パスワードが違います";
+  });
+})();
+</script>
+<script src="data_lcd.js"></script>
+<script src="data_hdd.js"></script>
+<script src="data_hdd2.js"></script>
+<script src="pairs.js"></script>
+<script src="pairs2.js"></script>
+<script>
+/* ============================================================
+   共通の設定
+   ============================================================ */
+const SKIP = ["型番／筐体色"];
+/* 項目名だけ変わったもの（旧 → 新）。同じページに変更先の項目が既にある場合は置き換えない */
+const ALIAS = {
+  "アップストリーム":"PC接続 (アップストリーム)","ダウンストリーム":"USBハブ (ダウンストリーム)","ブルーリダクション2":"ブルーライト低減","添付品":"付属品",
+  "電源":"定格電圧","消費電力":"消費電力（Typ）","コネクタ形状":"コネクター形状","外形寸法":"外形寸法（本体のみ） （W×D×H）",
+  "主な添付品":"付属品","ダウンロード対応アプリ":"対応アプリ","フォーマット":"出荷時フォーマット","質量":"質量（本体のみ）","アフターサービス概要":"アフターサービス"
+};
+Object.assign(ALIAS, {"盗難防止機能":"盗難防止用ホール","グリーン購入法基準":"グリーン購入法","対応OS":"対応OS （日本語版のみ）","添付アプリ":"対応アプリ"});
+const normKey = s => s.replace(/\s+/g, "");
+const ALIAS_N = Object.fromEntries(Object.entries(ALIAS).map(([k,v]) => [normKey(k), v]));
+const WD = ["日","月","火","水","木","金","土"];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const D = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const addDays = (dt,n) => { const x = new Date(dt); x.setDate(x.getDate()+n); return x; };
+const md = dt => `${dt.getMonth()+1}/${dt.getDate()}`;
+const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+const daysBetween = (a,b) => Math.round((b - a) / 86400000);
+const today = D(TODAY);
+
+/* 表中の「※数字」を注記の本文に置き換える（比較・コピー用） */
+function resolve(v, model){
+  const f = (FOOT[model]||{num:{}}).num;
+  return v.replace(/※(\d+)/g, (m,d) => f[d] ? `〔※：${f[d]}〕` : m);
+}
+const norm = s => s.replace(/\s+/g, "");
+/* 書き方だけの違いを見分けるためのゆるい比較（約・typ・保証・（W）などの記号を無視） */
+const loose = s => norm(s).replace(/（typ）|\(typ\)|（Typ）|保証|約|（[WDH]）|RH/gi,"").replace(/[％]/g,"%").replace(/[－ー\-–]/g,"-").replace(/〇/g,"○").replace(/、/g,"");
+/* 型番の部分を伏せて比べる（UTNB2 と UTN2C のように、表の中の型番だけが違う場合を見分ける） */
+const masked = s => loose(s.replace(/[A-Z0-9]{2,}-[A-Z0-9\/.*]+/g, "#"));
+
+/* ---------- 液晶（商品ページの仕様表） ---------- */
+function parseLCD(rows){
+  const list = []; let group = "";
+  rows.forEach(r => {
+    const c = r.split(" | ");
+    if (c.length < 2) return;
+    if (c.length >= 3) group = c[0];
+    const item = c[c.length-2], value = c[c.length-1];
+    if (SKIP.includes(item)) return;
+    let key = item;
+    if (item === "スタンドあり" || item === "スタンドなし") key = group.replace(/\s*（.*?）/,"") + "：" + item;
+    list.push({key:normKey(key), label:key, orig:item, value, remark:""});
+  });
+  return list;
+}
+/* ---------- ハードディスク（spec.htm の仕様表） ---------- */
+const isModelLike = t => /^[A-Z0-9]{2,}-[A-Z0-9*\/.]+$/.test(t);
+function tableKey(label){                 // 「型番 > ○○ > …」「商品名 > ○○ > …」の表の名前
+  const segs = label.split(" > ").map(x=>x.trim()); const name = segs[1] || segs[0];
+  return /エネルギー消費効率|W／GB|W\/GB/.test(label) ? "エネルギー消費効率" : name;
+}
+function parseHDD(rows, dup){
+  const dupMap = dup === "rokuga" ? DUP_HDD_ROKUGA : dup === "pctv" ? DUP_HDD_PCTV : DUP_HDD_PC;
+  const list = [], cnt = {};
+  const split = r => { const k = r.indexOf(" | "); return [r.slice(0,k), r.slice(k+3)]; };
+  const push = (key, orig, value) => {
+    const last = list[list.length-1];
+    if (last && last._open === key) { last.value += "\n" + value; return; }   // 同じ項目が続く行はまとめる
+    if (list.some(x => x.key === normKey(key))) key = key === "その他" ? "その他（機能）" : key + "（2）";
+    list.forEach(x => delete x._open);
+    list.push({key:normKey(key), label:key, orig, value, remark:"", _open:key});
+  };
+  let i = 0;
+  while (i < rows.length){
+    let [label, value] = split(rows[i]);
+    const segs = label.split(" > ").map(x=>x.trim()), item = segs[segs.length-1];
+    // ① 表の見出し行（値が空）：続く「型番の行」をまとめて1項目にする
+    if (value.trim() === "" && (segs[0] === "型番" || segs[0] === "商品名")) {
+      const key = tableKey(label); const heads = [segs.slice(1).join(" ／ ")]; i++;
+      while (i < rows.length && split(rows[i])[1].trim() === "" && /^(型番|商品名)/.test(split(rows[i])[0])) { heads.push(split(rows[i])[0].split(" > ").slice(1).join(" ／ ")); i++; }
+      const lines = ["［" + heads.filter(Boolean).join(" ／ ") + "］"];
+      while (i < rows.length){
+        const [l2, v2] = split(rows[i]); const t = l2.trim();
+        if (t === "") { lines.push(v2.replace(" ／ ", "：")); i++; }
+        else if (isModelLike(t)) { lines.push(t + "：" + v2); i++; }
+        else break;
+      }
+      list.forEach(x => delete x._open);
+      list.push({key:normKey(key), label:key, orig:key + "（型番ごとの表）", value:lines.join("\n"), remark:""});
+      continue;
+    }
+    // ② 新しい書式の「エネルギー消費効率」：型番の行＋値の行の2行
+    if (item === "エネルギー消費効率" && !/区分/.test(value) && rows[i+1] && rows[i+1].startsWith("エネルギー消費効率 | ") && /区分/.test(split(rows[i+1])[1])) {
+      const a = value.split(" ／ "), b = split(rows[i+1])[1].split(" ／ ");
+      list.forEach(x => delete x._open);
+      list.push({key:normKey(item), label:item, orig:item, value:a.map((m,j)=>m+"："+(b[j]||"")).join("\n"), remark:""});
+      i += 2; continue;
+    }
+    // ③ 備考は直前の項目の説明としてまとめる
+    if (item === "備考" && list.length) { const last = list[list.length-1]; last.remark = (last.remark ? last.remark + " " : "") + value; i++; continue; }
+    // ④ 「消費電力 > 1TB | 6.4W」のような小見出しつきの行
+    if (segs.length > 1) { push(segs[0], segs[0], segs.slice(1).join(" ") + "：" + value); i++; continue; }
+    // ⑤ ふつうの行（同じ見出しが何度も出るものは順番で意味を割り当てる）
+    let key = item;
+    if (dupMap[item]) { const n = cnt[item] || 0; cnt[item] = n + 1; if (dupMap[item][n]) key = dupMap[item][n]; }
+    push(key, item, value.replace(/^([A-Z0-9]{2,}-[A-Z0-9\/.*]+) ／ /, "$1："));   // 「型番 ／ 値」の行は「型番：値」に
+    i++;
+  }
+  list.forEach(x => delete x._open);
+  return list;
+}
+function applyAlias(list){
+  const keys = new Set(list.map(x=>x.key));
+  list.forEach(x => { const t = ALIAS_N[x.key]; if (t && !keys.has(normKey(t))) { x.key = normKey(t); x.label = t; } });
+  return list;
+}
+function parseModel(p, model){
+  return applyAlias(p.kind === "lcd" ? parseLCD(RAW[model]) : parseHDD(RAW2[model], p.dup));
+}
+const full = (x, model) => norm(resolve(x.value, model) + (x.remark ? "|" + x.remark : ""));
+
+function buildRows(p){
+  if (p._rows) return p._rows;
+  const o = parseModel(p, p.oldModel), n = parseModel(p, p.newModel);
+  const om = Object.fromEntries(o.map(x=>[x.key,x])), nm = Object.fromEntries(n.map(x=>[x.key,x]));
+  const order = n.map(x=>x.key);
+  o.forEach((x,i) => { if (!nm[x.key]) { let prev = i-1; while (prev >= 0 && !order.includes(o[prev].key)) prev--; order.splice(prev<0 ? 0 : order.indexOf(o[prev].key)+1, 0, x.key); } });
+  return p._rows = order.map(k => {
+    const a = om[k], b = nm[k];
+    if (!p._notesN) p._notesN = Object.fromEntries(Object.entries(p.notes).map(([nk,v]) => [normKey(nk), v]));
+    const note = p._notesN[k] || {};
+    let st = !a ? "add" : !b ? "del" : full(a,p.oldModel) === full(b,p.newModel) ? "same" : "diff";
+    let hint = note.text || "";
+    if (st === "diff" && note.kind === "note") st = "note";
+    else if (st === "diff" && loose(resolve(a.value,p.oldModel)+a.remark) === loose(resolve(b.value,p.newModel)+b.remark)) { st = "note"; hint = hint || "書き方のみの違い（自動判定）"; }
+    else if (st === "diff" && masked(resolve(a.value,p.oldModel)+a.remark) === masked(resolve(b.value,p.newModel)+b.remark)) { st = "note"; hint = hint || "型番の表記以外は同じ（自動判定）"; }
+    const renamed = a && b && a.orig !== b.orig ? `旧表記：${a.orig}` : "";
+    return {label:(b||a).label, renamed, a, b, st, hint};
+  });
+}
+function generalRows(p){
+  const o = (FOOT[p.oldModel]||{general:[]}).general, n = (FOOT[p.newModel]||{general:[]}).general;
+  const on = o.map(norm), nn = n.map(norm), rows = [];
+  n.forEach((t,i) => { const j = on.indexOf(nn[i]); rows.push({st: j>=0 ? "same" : "add", oldV: j>=0 ? o[j] : null, newV: t}); });
+  o.forEach((t,i) => { if (!nn.includes(on[i])) rows.push({st:"del", oldV:t, newV:null}); });
+  return rows;
+}
+function counts(rows){ const c = {diff:0,add:0,del:0,note:0,same:0}; rows.forEach(r=>c[r.st]++); return c; }
+const LABEL = {diff:"● 違う", add:"＋ 新型で追加", del:"－ 新型で削除", note:"表記のみ", same:"同じ"};
+
+/* ============================================================
+   画面：見出し・カレンダー・日付ごとのカード
+   ============================================================ */
+const start = addDays(today, -KEEP_DAYS);
+const active = PAIRS.filter(p => daysBetween(D(p.date), today) <= KEEP_DAYS && D(p.date) <= today);
+const unmatched = UNMATCHED.filter(u => daysBetween(D(u.date), today) <= KEEP_DAYS);
+
+$("#today").innerHTML = `本日 <b>${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（${WD[today.getDay()]}）</b><br>対象期間 ${md(start)}〜${md(today)}・新商品 ${active.length + unmatched.length}件（比較できたもの ${active.length}件）`;
+
+function renderCal(){
+  let h = `<div class="cal-title">発表カレンダー<span>数字は、その日に発表された新商品の件数です</span></div><div class="days" style="grid-template-columns:repeat(${KEEP_DAYS+1},minmax(24px,1fr));min-width:${(KEEP_DAYS+1)*26}px">`;
+  for (let i = 0; i <= KEEP_DAYS; i++){
+    const dt = addDays(start, i), key = ymd(dt);
+    const np = active.filter(p => p.date === key).length, nu = unmatched.filter(u => u.date === key).length;
+    const cls = ["day", dt.getDay()===0?"sun":"", dt.getDay()===6?"sat":"", i===KEEP_DAYS?"today":"", (np||nu)?"has":"", (i===0 && (np||nu))?"edge":""].join(" ");
+    h += `<div class="${cls}" ${(np||nu)?`data-go="${key}" title="${md(dt)} の新商品へ"`:""}>
+      <div class="m">${i===0 || dt.getDate()===1 ? (dt.getMonth()+1)+"月" : ""}</div>
+      <div class="d">${dt.getDate()}</div><div class="w">${WD[dt.getDay()]}</div>
+      ${np ? `<span class="dot">${np}</span>` : ""}${nu ? `<span class="dot gray">${nu}</span>` : ""}</div>`;
+  }
+  h += `</div><div class="cal-legend"><span><i style="background:var(--green)"></i>旧型と比較できた新商品</span><span><i style="background:#9aa3b2"></i>旧型が見つからなかった新商品</span><span><i style="background:#fdecea;border:1px solid #e8a59b"></i>本日で掲載終了</span></div>`;
+  $("#cal").innerHTML = h;
+  document.querySelectorAll("[data-go]").forEach(el => el.onclick = () => {
+    const t = document.getElementById("g-" + el.dataset.go) || $("#unm");
+    t.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+}
+
+function img(name){ return `img/${name}.webp`; }
+/* 仕様ページ（spec.htm）のURLから商品ページのURLを作る */
+function prodUrl(u){ return u.replace(/spec\.htm$/, ""); }
+function cardHTML(p){
+  const c = counts(buildRows(p)), gc = counts(generalRows(p));
+  return `<div class="card" data-id="${p.id}" tabindex="0">
+    <div class="cat">${esc(p.category)}</div>
+    <div class="imgs">
+      <figure class="old"><img src="${img(p.oldImg)}" alt="${esc(p.oldModel)}"><figcaption>現行<b>${esc(p.oldModel)}</b></figcaption></figure>
+      <div class="arrow">→</div>
+      <figure><img src="${img(p.newImg)}" alt="${esc(p.newModel)}"><figcaption>新商品<b>${esc(p.newModel)}</b></figcaption></figure>
+    </div>
+    <div class="badges">
+      <span class="badge">違い ${c.diff}件</span>
+      ${c.add + c.del ? `<span class="badge add">項目の増減 ${c.add + c.del}件</span>` : ""}
+      ${gc.add + gc.del ? `<span class="badge add">注記の増減 ${gc.add + gc.del}件</span>` : ""}
+      <span class="badge how ${p.how}">${p.how === "official" ? "公式の後継品表記で検出" : "型番ルールで検出"}</span>
+      ${p.caution ? `<span class="badge warn">要確認あり</span>` : ""}
+    </div>
+  </div>`;
+}
+function renderGroups(){
+  const dates = [...new Set(active.map(p => p.date))].sort().reverse();
+  $("#groups").innerHTML = dates.map(ds => {
+    const dt = D(ds), passed = daysBetween(dt, today), left = KEEP_DAYS - passed, end = addDays(dt, KEEP_DAYS);
+    return `<section class="group" id="g-${ds}">
+      <div class="tile"><div class="tm">${dt.getMonth()+1}月</div><div class="td">${dt.getDate()}</div><div class="tw">${WD[dt.getDay()]}曜日 発表</div></div>
+      <div class="gbody">
+        <div class="ginfo"><span>発表から <b>${passed}日</b></span>
+          <span class="bar ${left<=7?"late":""}"><i style="width:${Math.min(100, passed/KEEP_DAYS*100)}%"></i></span>
+          <span>${left > 0 ? `掲載終了まで あと <b>${left}日</b>（${md(end)}まで）` : `<b style="color:var(--red)">本日で掲載終了</b>`}</span></div>
+        <div class="cards">${active.filter(p => p.date === ds).map(cardHTML).join("")}</div>
+      </div></section>`;
+  }).join("") || `<p class="lead">直近${KEEP_DAYS}日に比較できる新商品はありません。</p>`;
+  document.querySelectorAll(".card").forEach(el => {
+    el.onclick = () => openPair(el.dataset.id);
+    el.onkeydown = e => { if (e.key === "Enter") openPair(el.dataset.id); };
+  });
+}
+function renderUnmatched(){
+  $("#unm").innerHTML = `<h2>旧型を自動で見つけられなかった新商品</h2>
+    <p>型番のルールでも公式の後継品表記でも旧型が見つからなかったものです。新シリーズの可能性もあります。旧型番がわかれば、登録するだけで比較に加わります。比較を見たい商品があれば、IS課 西川までお知らせください。</p>
+    <ul>${unmatched.sort((a,b)=>b.date.localeCompare(a.date)).map(u => `<li><span>${md(D(u.date))} 発表</span><a href="${u.url}" target="_blank" rel="noopener">${esc(u.name)}</a></li>`).join("")}</ul>`;
+}
+
+/* ============================================================
+   画面：違いの一覧（モーダル）
+   ============================================================ */
+let current = null, onlyDiff = false;
+function cell(x, model){
+  if (!x) return `<td class="val none">（項目なし）</td>`;
+  const f = (FOOT[model]||{num:{}}).num, fn = [];
+  x.value.replace(/※(\d+)/g, (m,d) => { if (f[d]) fn.push(`<span class="fn">※${d}　${esc(f[d])}</span>`); return m; });
+  if (x.remark) fn.push(`<span class="fn">備考：${esc(x.remark)}</span>`);
+  return `<td class="val">${esc(x.value)}${fn.join("")}</td>`;
+}
+function openPair(id){
+  current = PAIRS.find(p => p.id === id); if (!current) return;
+  try { history.replaceState(null, "", "#" + id); } catch(e) {}
+  renderModal(); $("#ov").classList.add("open"); document.body.style.overflow = "hidden";
+}
+function closeModal(){
+  $("#ov").classList.remove("open"); document.body.style.overflow = "";
+  try { history.replaceState(null, "", location.pathname); } catch(e) {}
+}
+function renderModal(){
+  const p = current, rows = buildRows(p), c = counts(rows), gr = generalRows(p), gc = counts(gr);
+  const body = rows.filter(r => !onlyDiff || r.st !== "same").map(r =>
+    `<tr class="${r.st}"><td class="item">${esc(r.label)}${r.renamed ? `<span class="rename">${esc(r.renamed)}</span>` : ""}</td>${cell(r.a,p.oldModel)}${cell(r.b,p.newModel)}<td class="mark">${LABEL[r.st]}${r.hint ? `<span class="hint">${esc(r.hint)}</span>` : ""}</td></tr>`).join("");
+  const gbody = gr.filter(r => !onlyDiff || r.st !== "same").map(r => {
+    const hint = (p.generalHints||{})[r.oldV || r.newV] || "";
+    return `<tr class="${r.st}">${r.oldV===null ? `<td class="val none">（記載なし）</td>` : `<td class="val">${esc(r.oldV)}</td>`}${r.newV===null ? `<td class="val none">（記載なし）</td>` : `<td class="val">${esc(r.newV)}</td>`}<td class="mark">${r.st==="same" ? "同じ" : r.st==="add" ? "＋ 新型で追加" : "－ 新型で削除"}${hint ? `<span class="hint">${esc(hint)}</span>` : ""}</td></tr>`;
+  }).join("");
+  const dt = D(p.date);
+  $("#modal").innerHTML = `
+    <div class="mhead"><div>
+      <h2>${esc(p.oldModel)} → ${esc(p.newModel)}</h2>
+      <div class="meta">${esc(p.category)}｜${dt.getMonth()+1}月${dt.getDate()}日 発表｜旧型の見つけ方：${esc(p.howText)}<br>
+        <a href="${p.newsUrl}" target="_blank" rel="noopener">ニュースリリース</a>・<a href="${p.oldUrl}" target="_blank" rel="noopener">現行の仕様ページ</a>・<a href="${p.newUrl}" target="_blank" rel="noopener">新商品の仕様ページ</a></div>
+    </div><button class="close" id="cl">閉じる ✕</button></div>
+    <div class="mimgs">
+      <figure><a href="${prodUrl(p.oldUrl)}" target="_blank" rel="noopener" title="${esc(p.oldModel)} の商品ページを開く"><img src="${img(p.oldImg)}" alt="${esc(p.oldModel)}"><figcaption>現行 <b>${esc(p.oldModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
+      <div class="arrow">→</div>
+      <figure><a href="${prodUrl(p.newUrl)}" target="_blank" rel="noopener" title="${esc(p.newModel)} の商品ページを開く"><img src="${img(p.newImg)}" alt="${esc(p.newModel)}"><figcaption>新商品 <b>${esc(p.newModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
+    </div>
+    ${p.lineup ? `<div class="infobox"><div class="lineup"><b>現行の容量</b><span>${esc(p.lineup.old)}</span><b>新商品の容量</b><span>${esc(p.lineup.new)}</span></div></div>` : ""}
+    ${p.caution ? `<div class="infobox warn"><b style="color:var(--red)">要確認：</b>${esc(p.caution)}${(p.cautionLinks||[]).map(l => `<br><a href="${l.url}" target="_blank" rel="noopener">${esc(l.text)} ↗</a>`).join("")}</div>` : ""}
+    <div class="controls">
+      <label class="toggle"><input type="checkbox" id="od" ${onlyDiff?"checked":""}> 違う項目だけ表示（違い${c.diff}件・追加${c.add}件・削除${c.del}件・表記のみ${c.note}件 ／ 全${rows.length}項目）</label>
+      <div class="legend"><span class="l-diff">違う</span><span class="l-add">項目の追加・削除</span><span class="l-note">表記のみ</span><span class="l-same">同じ</span></div>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>項目（新型の表記）</th><th>現行 ${esc(p.oldModel)}</th><th class="newcol">新商品 ${esc(p.newModel)}</th><th>判定</th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+    <h3 class="gtitle">仕様表の外の注記（表全体にかかるもの）<span>追加${gc.add}件・削除${gc.del}件・同じ${gc.same}件</span></h3>
+    <div style="overflow-x:auto"><table class="gtable">
+      <thead><tr><th>現行 ${esc(p.oldModel)}</th><th class="newcol">新商品 ${esc(p.newModel)}</th><th>判定</th></tr></thead>
+      <tbody>${gbody || `<tr><td colspan="3" style="color:var(--sub)">違いはありません</td></tr>`}</tbody></table></div>
+    <div class="copybar"><button class="copybtn" id="cp">違いをテキストでコピー（メール・チャット用）</button><span class="copied" id="cpd"></span></div>`;
+  $("#cl").onclick = closeModal;
+  $("#od").onchange = e => { onlyDiff = e.target.checked; renderModal(); };
+  $("#cp").onclick = () => copyText(p, rows, gr);
+}
+function copyText(p, rows, gr){
+  const v = (x, m) => x ? resolve(x.value, m) + (x.remark ? `（備考：${x.remark}）` : "") : "（項目なし）";
+  let t = `【${p.oldModel} → ${p.newModel} の違い】\n`;
+  if (p.lineup) t += `容量：現行 ${p.lineup.old} ／ 新商品 ${p.lineup.new}\n`;
+  t += "\n" + rows.filter(r => ["diff","add","del"].includes(r.st)).map(r => `■${r.label}（${LABEL[r.st].replace(/^[●＋－] /,"")}）\n　現行：${v(r.a,p.oldModel)}\n　新　：${v(r.b,p.newModel)}${r.hint ? "\n　補足：" + r.hint : ""}`).join("\n");
+  const g = gr.filter(r => r.st !== "same");
+  if (g.length) t += "\n\n■仕様表の外の注記\n" + g.map(r => `　${r.st==="add" ? "［新型で追加］" : "［新型で削除］"}${r.oldV || r.newV}`).join("\n");
+  t += `\n\n新商品の仕様ページ：${p.newUrl}`;
+  navigator.clipboard.writeText(t).then(() => { $("#cpd").textContent = "コピーしました"; setTimeout(() => $("#cpd").textContent = "", 2000); })
+    .catch(() => { $("#cpd").textContent = "コピーできませんでした"; });
+}
+$("#ov").onclick = e => { if (e.target.id === "ov") closeModal(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#ov").classList.contains("open")) closeModal(); });
+
+renderCal(); renderGroups(); renderUnmatched();
+$("#foot").textContent = `※ 試作版です（データは ${TODAY.replace(/-/g,"/")} に公式サイトから取得）。各商品の仕様表の原文を項目ごとに突き合わせ、表中の「※番号」は注記の本文に置き換えて比べています。「表記のみ」は人の確認、または数字が同じで書き方だけ違うものを自動で判定しています。仕様は予告なく変更される場合があります。`;
+const h = location.hash.slice(1); if (PAIRS.some(p => p.id === h)) openPair(h);
+window.addEventListener("hashchange", () => { const k = location.hash.slice(1); if (PAIRS.some(p => p.id === k)) openPair(k); });
+</script>
+</body>
+</html>
