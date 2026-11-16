@@ -42,19 +42,25 @@
   .wrap{max-width:1150px;margin:0 auto;padding:20px}
   .lead{font-size:13px;color:var(--sub);margin:0 0 14px}
   /* ---------- calendar strip ---------- */
-  .cal{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px;margin-bottom:22px;overflow-x:auto}
+  .cal{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:18px}
+  .cal summary{cursor:pointer;padding:8px 14px;font-size:13px;font-weight:700;color:var(--navy);list-style:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .cal summary::-webkit-details-marker{display:none}
+  .cal summary::after{content:"▼";font-size:10px;color:var(--sub);margin-left:auto}
+  .cal[open] summary::after{content:"▲"}
+  .cal summary span{font-weight:400;color:var(--sub);font-size:12px}
+  .calin{padding:0 12px 10px;overflow-x:auto}
   .cal-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .cal-title span{font-weight:400;color:var(--sub)}
   .days{display:grid;gap:2px}
-  .day{border-radius:6px;padding:4px 0 6px;text-align:center;font-size:12px;color:var(--sub);background:#f7f8fb;position:relative;min-height:58px}
-  .day .m{font-size:10px;height:14px;color:var(--navy);font-weight:700}
-  .day .d{font-size:14px;font-weight:700;color:var(--ink)}
-  .day .w{font-size:10px}
+  .day{border-radius:4px;padding:2px 0 3px;text-align:center;font-size:10px;color:var(--sub);background:#f7f8fb;position:relative;min-height:40px;line-height:1.3}
+  .day .m{font-size:9px;height:12px;color:var(--navy);font-weight:700;white-space:nowrap}
+  .day .d{font-size:11px;font-weight:700;color:var(--ink)}
+  .day .w{font-size:9px}
   .day.sun .w,.day.sun .d{color:var(--red)} .day.sat .w,.day.sat .d{color:var(--navy2)}
   .day.today{outline:2px solid var(--navy);background:#fff}
   .day.has{background:var(--green-bg);cursor:pointer}
   .day.has:hover{background:#d3efe3}
-  .day .dot{display:inline-block;margin-top:2px;min-width:18px;padding:0 4px;border-radius:9px;background:var(--green);color:#fff;font-size:10px;font-weight:700;line-height:16px}
+  .day .dot{display:inline-block;margin-top:1px;min-width:13px;padding:0 2px;border-radius:7px;background:var(--green);color:#fff;font-size:9px;font-weight:700;line-height:13px}
   .day .dot.gray{background:#9aa3b2}
   .day.edge{background:#fdecea}
   .cal-legend{font-size:11px;color:var(--sub);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
@@ -175,7 +181,7 @@
   <p class="lead">公式サイトの新商品ニュースから新商品を拾い、旧型を探して、仕様表の原文どうしを項目ごとに突き合わせています。発表から60日たった商品は一覧から外れます。カードを押すと違いの一覧が開きます。</p>
   <div class="req"><b>比較のご要望を受け付けています</b>「この新商品とこの商品を比べたい」「旧型が見つからない新商品の比較も見たい」などのご要望は、<b>IS課 西川</b>までお知らせください。</div>
   <div class="src"><b>掲載内容の出どころ</b>このページの内容は、すべて当社公式サイトで公開されている情報（商品ページ・仕様ページ・ニュースリリース・商品画像）から取得したものです。社内資料などの非公開情報は使っていません。</div>
-  <div class="cal" id="cal"></div>
+  <details class="cal" id="cal"></details>
   <div id="groups"></div>
   <div class="unm" id="unm"></div>
 </div>
@@ -237,6 +243,10 @@ const norm = s => s.replace(/\s+/g, "");
 /* 書き方だけの違いを見分けるためのゆるい比較（約・typ・保証・（W）などの記号を無視） */
 const loose = s => norm(s).replace(/（typ）|\(typ\)|（Typ）|保証|約|（[WDH]）|RH/gi,"").replace(/[％]/g,"%").replace(/[－ー\-–]/g,"-").replace(/〇/g,"○").replace(/、/g,"");
 /* 型番の部分を伏せて比べる（UTNB2 と UTN2C のように、表の中の型番だけが違う場合を見分ける） */
+/* 「、」や「※」で区切られた一覧を、1項目ずつに分けて比べる（並び順の違いを無視するため） */
+const splitItems = s => (s||"").split(/、(?!\d)|，|\s*／\s*|\n|\s+(?=※)|\s+(?=(?:Windows|macOS|Chrome ?OS|ChromeOS|Ubuntu|Mac)\b)/).map(x => x.trim()).filter(Boolean);
+const itemKey = x => loose(x.replace(/アイ・オー・データ/g, "I-O DATA").replace(/（※\d+）|※\d+(?!\S)/g, "")).replace(/準拠|1本|。$/g, "");
+const sameItems = (a, b) => { const x = splitItems(a).map(itemKey).sort(), y = splitItems(b).map(itemKey).sort(); return x.length === y.length && x.every((v,i) => v === y[i]); };
 const masked = s => loose(s.replace(/[A-Z0-9]{2,}-[A-Z0-9\/.*]+/g, "#"));
 
 /* ---------- 液晶（商品ページの仕様表） ---------- */
@@ -334,7 +344,17 @@ function buildRows(p){
     let hint = note.text || "";
     if (st === "diff" && note.kind === "note") st = "note";
     else if (st === "diff" && loose(resolve(a.value,p.oldModel)+a.remark) === loose(resolve(b.value,p.newModel)+b.remark)) { st = "note"; hint = hint || "書き方のみの違い（自動判定）"; }
+    else if (st === "diff" && sameItems(resolve(a.value,p.oldModel), resolve(b.value,p.newModel)) && sameItems(a.remark, b.remark)) { st = "same"; hint = hint || "並び順・書き方だけの違いのため「同じ」と判定（自動判定）"; }
     else if (st === "diff" && masked(resolve(a.value,p.oldModel)+a.remark) === masked(resolve(b.value,p.newModel)+b.remark)) { st = "note"; hint = hint || "型番の表記以外は同じ（自動判定）"; }
+    if (st === "diff" && !hint) {               // 一覧どうしなら、増えた項目・なくなった項目を書き出す
+      const oi = splitItems(resolve(a.value,p.oldModel)), ni = splitItems(resolve(b.value,p.newModel));
+      if (oi.length >= 2 && ni.length >= 2) {
+        const ok = oi.map(itemKey), nk = ni.map(itemKey);
+        const added = ni.filter((v,i) => !ok.includes(nk[i])), removed = oi.filter((v,i) => !nk.includes(ok[i]));
+        if (added.length + removed.length && added.length <= 8 && removed.length <= 8)
+          hint = [added.length ? "新型で追加：" + added.join("、") : "", removed.length ? "新型でなくなった：" + removed.join("、") : ""].filter(Boolean).join(" ／ ");
+      }
+    }
     const renamed = a && b && a.orig !== b.orig ? `旧表記：${a.orig}` : "";
     return {label:(b||a).label, renamed, a, b, st, hint};
   });
@@ -359,7 +379,7 @@ const unmatched = UNMATCHED.filter(u => daysBetween(D(u.date), today) <= KEEP_DA
 $("#today").innerHTML = `本日 <b>${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（${WD[today.getDay()]}）</b><br>対象期間 ${md(start)}〜${md(today)}・新商品 ${active.length + unmatched.length}件（比較できたもの ${active.length}件）`;
 
 function renderCal(){
-  let h = `<div class="cal-title">発表カレンダー<span>数字は、その日に発表された新商品の件数です</span></div><div class="days" style="grid-template-columns:repeat(${KEEP_DAYS+1},minmax(24px,1fr));min-width:${(KEEP_DAYS+1)*26}px">`;
+  let h = `<summary>📅 発表カレンダー（${md(start)}〜${md(today)}・新商品 ${active.length + unmatched.length}件）<span>押すと開きます／閉じます</span></summary><div class="calin"><div class="days" style="grid-template-columns:repeat(${KEEP_DAYS+1},minmax(17px,1fr));min-width:${(KEEP_DAYS+1)*18}px">`;
   for (let i = 0; i <= KEEP_DAYS; i++){
     const dt = addDays(start, i), key = ymd(dt);
     const np = active.filter(p => p.date === key).length, nu = unmatched.filter(u => u.date === key).length;
@@ -369,7 +389,7 @@ function renderCal(){
       <div class="d">${dt.getDate()}</div><div class="w">${WD[dt.getDay()]}</div>
       ${np ? `<span class="dot">${np}</span>` : ""}${nu ? `<span class="dot gray">${nu}</span>` : ""}</div>`;
   }
-  h += `</div><div class="cal-legend"><span><i style="background:var(--green)"></i>旧型と比較できた新商品</span><span><i style="background:#9aa3b2"></i>旧型が見つからなかった新商品</span><span><i style="background:#fdecea;border:1px solid #e8a59b"></i>本日で掲載終了</span></div>`;
+  h += `</div><div class="cal-legend"><span><i style="background:var(--green)"></i>旧型と比較できた新商品</span><span><i style="background:#9aa3b2"></i>旧型が見つからなかった新商品</span><span><i style="background:#fdecea;border:1px solid #e8a59b"></i>本日で掲載終了</span><span>数字は、その日に発表された新商品の件数です</span></div></div>`;
   $("#cal").innerHTML = h;
   document.querySelectorAll("[data-go]").forEach(el => el.onclick = () => {
     const t = document.getElementById("g-" + el.dataset.go) || $("#unm");
