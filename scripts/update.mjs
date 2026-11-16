@@ -1,5 +1,5 @@
 // =============================================================
-//  新商品 差分カレンダー：毎朝の自動データ取得
+//  新商品差分チェッカー：毎朝の自動データ取得
 //  ・公式サイトの新商品ニュースから直近 KEEP_DAYS 日分を拾う
 //  ・旧型を探す（旧型ページ備考欄の「後継品」→ 型番ルール の順）
 //  ・新旧の仕様表・※注記・容量ラインナップ・商品画像を取り込む
@@ -45,7 +45,9 @@ async function get(url, binary = false) {
 }
 
 // ---------- HTML を読むための小さな道具 ----------
+const NAMED = { times: "×", yen: "¥", copy: "©", reg: "®", trade: "™", middot: "・", ndash: "–", mdash: "—", hellip: "…", laquo: "«", raquo: "»", deg: "°", plusmn: "±", micro: "µ", sup2: "²", sup3: "³", frac12: "½", divide: "÷", rarr: "→", larr: "←", hArr: "⇔", bull: "•", ensp: " ", emsp: " ", thinsp: " " };
 const decode = s => s
+  .replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, (m, n) => NAMED[n] !== undefined ? NAMED[n] : m)
   .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
   .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
   .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d)).replace(/&amp;/g, "&");
@@ -120,7 +122,7 @@ async function loadProduct(dir) {
   const html = await get(dir);
   if (!html) return null;
   const t = titleOf(html).split(" | ");
-  const name = (t[0] || "").replace(/シリーズ$/, "").trim();
+  const name = (t[0] || "").replace(/\s*シリーズ[\s\S]*$/, "").trim();
   return { dir, slug: dir.split("/").filter(Boolean).pop(), name, category: (t[1] || "").trim(), html, ...productInfo(html) };
 }
 
@@ -156,10 +158,11 @@ function ruleCandidates(slug) {             // 「ひとつ前の世代らしい
   s.delete(slug);
   return [...s].filter(x => x.length > 3 && !x.endsWith("-"));
 }
-async function findPredecessor(newP) {
+async function findPredecessor(newP, siblings = []) {
   const base = newP.dir.replace(/[^/]+\/$/, "");
   const isNew = codes => codes.some(c => newP.codes.some(n => sameCode(c, n)));
   for (const c of ruleCandidates(newP.slug)) {
+    if (siblings.includes(base + c + "/")) continue;     // 同じニュースで一緒に発表された商品は旧型ではない
     let p = await loadProduct(base + c + "/");
     if (!p || !p.codes.length) continue;
     // 後継品の表記を、新商品にたどり着くまで最大3回たどる
@@ -236,7 +239,7 @@ async function main() {
       const np = await loadProduct(dir);
       if (!np || !np.codes.length) continue;
       if (pairs.some(p => p.id === np.slug) || unmatched.some(u => u.id === np.slug)) continue;
-      const found = await findPredecessor(np);
+      const found = await findPredecessor(np, dirs);
       if (!found) { unmatched.push({ id: np.slug, date: n.date, name: np.name, url: BASE + n.href }); console.log(`  × ${np.name}（旧型なし）`); continue; }
       const op = found.p;
       const [ns, os] = [await loadSpec(np.dir), await loadSpec(op.dir)];
@@ -251,6 +254,13 @@ async function main() {
       console.log(`  ○ ${op.name} → ${np.name}（${found.how}）`);
     }
   }
+  // 旧型が見つからなかったものは、同じニュースの商品を1行にまとめる（EX-／KH-／HT- のような色違い・型番違いなど）
+  const um = [];
+  for (const u of unmatched) {
+    const g = um.find(x => x.url === u.url);
+    if (g) { if (!g.name.split("／").includes(u.name)) g.name += "／" + u.name; } else um.push({ ...u });
+  }
+  unmatched.splice(0, unmatched.length, ...um);
   const data = { updatedAt: TODAY, keepDays: KEEP_DAYS, pairs, unmatched, specs };
   console.log(`比較 ${pairs.length}組／旧型なし ${unmatched.length}件／アクセス ${requests}回`);
 
