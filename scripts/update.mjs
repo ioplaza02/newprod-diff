@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = "https://www.iodata.jp";
 const KEEP_DAYS = 60;
-const WAIT_MS = +process.env.WAIT_MS || 1200;                       // 公式サイトに負担をかけないよう、1件ずつ間をあける
+const WAIT_MS = +process.env.WAIT_MS || 2000;                       // 公式サイトに負担をかけないよう、1件ずつ間をあける
 const UA = "NewprodDiffBot/1.0 (internal tool; GitHub Actions)";
 const OUT = path.join(ROOT, "data", "data.json");
 const IMG_DIR = path.join(ROOT, "img");
