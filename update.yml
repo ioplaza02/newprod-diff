@@ -1,0 +1,35 @@
+name: 毎朝のデータ更新
+
+on:
+  schedule:
+    - cron: "0 18 * * *"   # 日本時間で毎朝 3:00
+  workflow_dispatch:        # Actions の画面から手動でも動かせる
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 公式サイトから最新の情報を取得
+        run: node scripts/update.mjs
+
+      - name: 変更があれば保存（GitHub Pages に自動で反映されます）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data img
+          if git diff --cached --quiet; then
+            echo "変更はありませんでした"
+          else
+            git commit -m "データ更新 $(TZ=Asia/Tokyo date +%F)"
+            git push
+          fi

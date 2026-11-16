@@ -197,7 +197,7 @@
 <div class="wrap">
   <h1 class="ptitle">新商品と旧型の違いを、発表日ごとに確認する</h1>
   <div class="notice" id="today"></div>
-  <p class="lead">公式サイトの新商品ニュースから新商品を拾い、旧型を探して、仕様表の原文どうしを項目ごとに突き合わせています。発表から60日たった商品は一覧から外れます。カードを押すと違いの一覧が開きます。</p>
+  <p class="lead">毎朝、公式サイトの新商品ニュースから新商品を拾い、旧型を探して、仕様表の原文どうしを項目ごとに突き合わせています。発表から60日たった商品は一覧から外れます。カードを押すと違いの一覧が開きます。</p>
   <div class="req"><b>比較のご要望を受け付けています</b>「この新商品とこの商品を比べたい」「旧型が見つからない新商品の比較も見たい」などのご要望は、<b>IS課 西川</b>までお知らせください。</div>
   <div class="src"><b>掲載内容の出どころ</b>このページの内容は、すべて当社公式サイトで公開されている情報（商品ページ・仕様ページ・ニュースリリース・商品画像）から取得したものです。社内資料などの非公開情報は使っていません。</div>
   <details class="cal" id="cal"></details>
@@ -229,7 +229,32 @@
 <script src="data_hdd2.js"></script>
 <script src="pairs.js"></script>
 <script src="pairs2.js"></script>
-<script>
+<script type="module">
+/* ============================================================
+   毎朝の自動取得の結果（data/data.json）があれば、それを使う
+   無いとき（手元で開いたとき等）は、上のファイルに入っている11/13時点のデータで表示する
+   ============================================================ */
+async function loadAuto(){
+  try {
+    const r = await fetch("data/data.json", {cache:"no-store"});
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d || !Array.isArray(d.pairs)) return;
+    TODAY = d.updatedAt;
+    const prev = Object.fromEntries(PAIRS.map(p => [p.id, p]));
+    const merged = d.pairs.map(p => {
+      const s = prev[p.id], same = s && s.oldModel === p.oldModel;      // 人が書いた補足は、同じ組み合わせのときだけ引き継ぐ
+      return Object.assign({kind:"auto", notes:{}, generalHints:{}},
+        same ? {notes:s.notes || {}, generalHints:s.generalHints || {}} : {}, p,
+        same && !p.caution && s.caution ? {caution:s.caution, cautionLinks:s.cautionLinks} : {});
+    });
+    PAIRS.splice(0, PAIRS.length, ...merged);
+    UNMATCHED.splice(0, UNMATCHED.length, ...d.unmatched);
+    for (const [m, sp] of Object.entries(d.specs || {})) { RAW2[m] = sp.rows; FOOT[m] = {num: sp.num || {}, general: sp.general || []}; }
+  } catch(e) {}
+}
+await loadAuto();
+
 /* ============================================================
    共通の設定
    ============================================================ */
@@ -329,10 +354,19 @@ function parseHDD(rows, dup){
     // ③ 備考は直前の項目の説明としてまとめる
     if (item === "備考" && list.length) { const last = list[list.length-1]; last.remark = (last.remark ? last.remark + " " : "") + value; i++; continue; }
     // ④ 「消費電力 > 1TB | 6.4W」のような小見出しつきの行
-    if (segs.length > 1) { push(segs[0], segs[0], segs.slice(1).join(" ") + "：" + value); i++; continue; }
+    if (segs.length > 1) {
+      const last = segs[segs.length-1];
+      if (/^[\d／・\/.\s]+(TB|GB)$/.test(last) || segs[0] === "添付アプリ") { push(segs[0], segs[0], segs.slice(1).join(" ") + "：" + value); i++; continue; }  // 容量ごとの行などはまとめる
+      if (SKIP.includes(last)) { i++; continue; }
+      // 「液晶パネル > パネルタイプ」のような行は、いちばん下の見出しを項目名にする
+      const key = (last === "スタンドあり" || last === "スタンドなし") ? segs[0].replace(/\s*（.*?）/, "") + "：" + last : last;
+      push(key, last, value); i++; continue;
+    }
+    if (SKIP.includes(item)) { i++; continue; }
     // ⑤ ふつうの行（同じ見出しが何度も出るものは順番で意味を割り当てる）
     let key = item;
-    if (dupMap[item]) { const n = cnt[item] || 0; cnt[item] = n + 1; if (dupMap[item][n]) key = dupMap[item][n]; }
+    // 「対応機種」が何度も出てくる旧書式は、中身を見て「テレビ」「レコーダー」「その他」「パソコン」に振り分ける
+    if (item === "対応機種") key = /レコーダー/.test(value) ? "レコーダー" : /チューナー|セットトップ/.test(value) ? "その他" : /テレビ|レグザ|ビエラ|ブラビア|アクオス/.test(value) ? "テレビ" : "パソコン";
     push(key, item, value.replace(/^([A-Z0-9]{2,}-[A-Z0-9\/.*]+) ／ /, "$1："));   // 「型番 ／ 値」の行は「型番：値」に
     i++;
   }
@@ -360,7 +394,7 @@ function buildRows(p){
     if (!p._notesN) p._notesN = Object.fromEntries(Object.entries(p.notes).map(([nk,v]) => [normKey(nk), v]));
     const note = p._notesN[k] || {};
     let st = !a ? "add" : !b ? "del" : full(a,p.oldModel) === full(b,p.newModel) ? "same" : "diff";
-    let hint = note.text || "";
+    let hint = st === "same" ? "" : (note.text || "");   // 「同じ」になった行には、人が書いた補足は出さない
     if (st === "diff" && note.kind === "note") st = "note";
     else if (st === "diff" && loose(resolve(a.value,p.oldModel)+a.remark) === loose(resolve(b.value,p.newModel)+b.remark)) { st = "note"; hint = hint || "書き方のみの違い（自動判定）"; }
     else if (st === "diff" && sameItems(resolve(a.value,p.oldModel), resolve(b.value,p.newModel)) && sameItems(a.remark, b.remark)) { st = "same"; hint = hint || "並び順・書き方だけの違いのため「同じ」と判定（自動判定）"; }
@@ -416,7 +450,7 @@ function renderCal(){
   });
 }
 
-function img(name){ return `img/${name}.webp`; }
+function img(name){ return String(name).includes("/") ? name : `img/${name}.webp`; }
 /* 仕様ページ（spec.htm）のURLから商品ページのURLを作る */
 function prodUrl(u){ return u.replace(/spec\.htm$/, ""); }
 function cardHTML(p){
@@ -497,9 +531,9 @@ function renderModal(){
         <a href="${p.newsUrl}" target="_blank" rel="noopener">ニュースリリース</a>・<a href="${p.oldUrl}" target="_blank" rel="noopener">現行の仕様ページ</a>・<a href="${p.newUrl}" target="_blank" rel="noopener">新商品の仕様ページ</a></div>
     </div><button class="close" id="cl">閉じる ✕</button></div>
     <div class="mimgs">
-      <figure><a href="${prodUrl(p.oldUrl)}" target="_blank" rel="noopener" title="${esc(p.oldModel)} の商品ページを開く"><img src="${img(p.oldImg)}" alt="${esc(p.oldModel)}"><figcaption>現行 <b>${esc(p.oldModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
+      <figure><a href="${p.oldPage || prodUrl(p.oldUrl)}" target="_blank" rel="noopener" title="${esc(p.oldModel)} の商品ページを開く"><img src="${img(p.oldImg)}" alt="${esc(p.oldModel)}"><figcaption>現行 <b>${esc(p.oldModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
       <div class="arrow">→</div>
-      <figure><a href="${prodUrl(p.newUrl)}" target="_blank" rel="noopener" title="${esc(p.newModel)} の商品ページを開く"><img src="${img(p.newImg)}" alt="${esc(p.newModel)}"><figcaption>新商品 <b>${esc(p.newModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
+      <figure><a href="${p.newPage || prodUrl(p.newUrl)}" target="_blank" rel="noopener" title="${esc(p.newModel)} の商品ページを開く"><img src="${img(p.newImg)}" alt="${esc(p.newModel)}"><figcaption>新商品 <b>${esc(p.newModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
     </div>
     ${p.lineup ? `<div class="infobox"><div class="lineup"><b>現行の容量</b><span>${esc(p.lineup.old)}</span><b>新商品の容量</b><span>${esc(p.lineup.new)}</span></div></div>` : ""}
     ${p.caution ? `<div class="infobox warn"><b style="color:var(--red)">要確認：</b>${esc(p.caution)}${(p.cautionLinks||[]).map(l => `<br><a href="${l.url}" target="_blank" rel="noopener">${esc(l.text)} ↗</a>`).join("")}</div>` : ""}
