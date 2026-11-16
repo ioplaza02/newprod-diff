@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>新商品 差分カレンダー</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -26,19 +29,27 @@
   .gbox .gerr{color:var(--red);font-size:13px;min-height:20px;margin-top:6px}
   .gbox .gnote{font-size:12px;color:var(--sub);margin-top:6px}
   /* ---------- top band ---------- */
-  .topband{background:#0f1d3a;color:#fff;font-size:13px;padding:6px 24px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .topband .internal{font-weight:700;letter-spacing:.05em;color:#ffd166}
+
   .req{background:#fff;border:1px solid var(--line);border-left:5px solid var(--green);border-radius:10px;padding:12px 16px;font-size:14px;margin:0 0 16px}
   .req > b:first-child{display:block;color:var(--green);margin-bottom:2px}
   .src{font-size:13px;color:var(--sub);background:#fff;border:1px solid var(--line);border-left:5px solid #9aa3b2;border-radius:10px;padding:10px 16px;margin:0 0 16px}
   .src b{display:block;color:var(--ink);margin-bottom:2px}
   /* ---------- header ---------- */
-  header{background:var(--navy);color:#fff;padding:20px 24px 18px}
-  .hwrap{max-width:1150px;margin:0 auto;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
-  header h1{margin:0;font-size:22px;letter-spacing:.06em;font-weight:900}
-  header h1 small{display:block;font-size:12px;font-weight:400;letter-spacing:.02em;opacity:.8;margin-top:2px}
-  .today{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px 14px;font-size:13px;line-height:1.5}
-  .today b{font-size:16px}
+  .site-header{position:relative;overflow:hidden;color:#fff;background:linear-gradient(115deg,#13213f 0%,#16334f 55%,#0f4a55 100%);padding:26px 28px}
+  .site-header::after{content:"";position:absolute;inset:0 0 0 45%;background-image:radial-gradient(rgba(255,255,255,.10) 1px,transparent 1.2px);background-size:7px 7px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 40%);mask-image:linear-gradient(90deg,transparent,#000 40%);pointer-events:none}
+  .site-header__inner{position:relative;z-index:1;max-width:1220px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .site-header__brand{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .site-header__internal{color:#f5c542;font-weight:900;font-size:19px;letter-spacing:.04em}
+  .site-header__logo{font-size:28px;font-weight:900;letter-spacing:.14em}
+  .site-header__badge{border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:5px 16px;font-size:14px;font-weight:700;background:rgba(255,255,255,.06)}
+  .site-header__right{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .site-header__contact{border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:6px 18px;font-size:14px;font-weight:700;background:rgba(255,255,255,.08)}
+  .site-header__right .search input{width:440px;max-width:80vw;padding:12px 18px;font-size:15px;border:0;border-radius:999px;font-family:inherit;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .ptitle{font-size:24px;margin:6px 0 10px;font-weight:900;color:var(--ink)}
+  .notice{background:#fffaf0;border:1px solid #f3dfb5;border-left:5px solid #e0a800;border-radius:10px;padding:10px 16px;font-size:13px;margin:0 0 14px;line-height:1.7}
+  .notice b{color:var(--ink)}
+  .hidden-by-search{display:none !important}
+  @media (max-width:900px){.site-header__right{align-items:stretch;width:100%}.site-header__right .search input{width:100%;max-width:none}.site-header__logo{font-size:22px}}
   .wrap{max-width:1150px;margin:0 auto;padding:20px}
   .lead{font-size:13px;color:var(--sub);margin:0 0 14px}
   /* ---------- calendar strip ---------- */
@@ -171,13 +182,21 @@
   <div class="gerr" id="gerr"></div>
   <div class="gnote">お問い合わせ先：IS課 西川</div>
 </form></div>
-<div class="topband"><span class="internal">【社内限定】</span><span>お問い合わせ先：IS課 西川</span></div>
-<header><div class="hwrap">
-  <h1>新商品 差分カレンダー<small>直近60日に発表された新商品を見つけて、旧型との違いを自動で並べます</small></h1>
-  <div class="today" id="today"></div>
+<header class="site-header"><div class="site-header__inner">
+  <div class="site-header__brand">
+    <span class="site-header__internal">【社内限定】</span>
+    <span class="site-header__logo">新商品</span>
+    <span class="site-header__badge">差分カレンダー</span>
+  </div>
+  <div class="site-header__right">
+    <span class="site-header__contact">お問い合わせ先：IS課 西川</span>
+    <div class="search"><input type="search" id="kw" placeholder="型番で探す（例：AVHD、LCD-U431D）" aria-label="型番で探す"></div>
+  </div>
 </div></header>
 
 <div class="wrap">
+  <h1 class="ptitle">新商品と旧型の違いを、発表日ごとに確認する</h1>
+  <div class="notice" id="today"></div>
   <p class="lead">公式サイトの新商品ニュースから新商品を拾い、旧型を探して、仕様表の原文どうしを項目ごとに突き合わせています。発表から60日たった商品は一覧から外れます。カードを押すと違いの一覧が開きます。</p>
   <div class="req"><b>比較のご要望を受け付けています</b>「この新商品とこの商品を比べたい」「旧型が見つからない新商品の比較も見たい」などのご要望は、<b>IS課 西川</b>までお知らせください。</div>
   <div class="src"><b>掲載内容の出どころ</b>このページの内容は、すべて当社公式サイトで公開されている情報（商品ページ・仕様ページ・ニュースリリース・商品画像）から取得したものです。社内資料などの非公開情報は使っていません。</div>
@@ -376,7 +395,7 @@ const start = addDays(today, -KEEP_DAYS);
 const active = PAIRS.filter(p => daysBetween(D(p.date), today) <= KEEP_DAYS && D(p.date) <= today);
 const unmatched = UNMATCHED.filter(u => daysBetween(D(u.date), today) <= KEEP_DAYS);
 
-$("#today").innerHTML = `本日 <b>${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（${WD[today.getDay()]}）</b><br>対象期間 ${md(start)}〜${md(today)}・新商品 ${active.length + unmatched.length}件（比較できたもの ${active.length}件）`;
+$("#today").innerHTML = `直近${KEEP_DAYS}日（${md(start)}〜${md(today)}）に発表された新商品 <b>${active.length + unmatched.length}件</b>（旧型と比較できたもの <b>${active.length}件</b>）<br><b>データ最終更新：${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日</b>`;
 
 function renderCal(){
   let h = `<summary>📅 発表カレンダー（${md(start)}〜${md(today)}・新商品 ${active.length + unmatched.length}件）<span>押すと開きます／閉じます</span></summary><div class="calin"><div class="days" style="grid-template-columns:repeat(${KEEP_DAYS+1},minmax(17px,1fr));min-width:${(KEEP_DAYS+1)*18}px">`;
@@ -515,6 +534,17 @@ $("#ov").onclick = e => { if (e.target.id === "ov") closeModal(); };
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#ov").classList.contains("open")) closeModal(); });
 
 renderCal(); renderGroups(); renderUnmatched();
+/* 型番で探す：カードと「見つからなかった新商品」を絞り込む */
+$("#kw").addEventListener("input", e => {
+  const q = e.target.value.trim().toUpperCase().replace(/\s+/g,"");
+  document.querySelectorAll(".card").forEach(c => {
+    const p = PAIRS.find(x => x.id === c.dataset.id);
+    const hit = !q || (p.oldModel + p.newModel + p.category).toUpperCase().replace(/\s+/g,"").includes(q);
+    c.classList.toggle("hidden-by-search", !hit);
+  });
+  document.querySelectorAll(".group").forEach(g => g.classList.toggle("hidden-by-search", !g.querySelector(".card:not(.hidden-by-search)")));
+  document.querySelectorAll("#unm li").forEach(li => li.classList.toggle("hidden-by-search", !!q && !li.textContent.toUpperCase().replace(/\s+/g,"").includes(q)));
+});
 $("#foot").textContent = `※ 試作版です（データは ${TODAY.replace(/-/g,"/")} に公式サイトから取得）。各商品の仕様表の原文を項目ごとに突き合わせ、表中の「※番号」は注記の本文に置き換えて比べています。「表記のみ」は人の確認、または数字が同じで書き方だけ違うものを自動で判定しています。仕様は予告なく変更される場合があります。`;
 const h = location.hash.slice(1); if (PAIRS.some(p => p.id === h)) openPair(h);
 window.addEventListener("hashchange", () => { const k = location.hash.slice(1); if (PAIRS.some(p => p.id === k)) openPair(k); });
