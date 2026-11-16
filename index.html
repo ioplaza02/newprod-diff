@@ -535,7 +535,7 @@ function renderModal(){
       <div class="arrow">→</div>
       <figure><a href="${p.newPage || prodUrl(p.newUrl)}" target="_blank" rel="noopener" title="${esc(p.newModel)} の商品ページを開く"><img src="${img(p.newImg)}" alt="${esc(p.newModel)}"><figcaption>新商品 <b>${esc(p.newModel)}</b><span class="golink">商品ページ ↗</span></figcaption></a></figure>
     </div>
-    ${p.lineup ? `<div class="infobox"><div class="lineup"><b>現行の容量</b><span>${esc(p.lineup.old)}</span><b>新商品の容量</b><span>${esc(p.lineup.new)}</span></div></div>` : ""}
+    ${p.lineup && !(p.lineup.old === p.oldModel && p.lineup.new === p.newModel) ? `<div class="infobox"><div class="lineup"><b>現行のラインナップ</b><span>${esc(p.lineup.old)}</span><b>新商品のラインナップ</b><span>${esc(p.lineup.new)}</span></div></div>` : ""}
     ${p.caution ? `<div class="infobox warn"><b style="color:var(--red)">要確認：</b>${esc(p.caution)}${(p.cautionLinks||[]).map(l => `<br><a href="${l.url}" target="_blank" rel="noopener">${esc(l.text)} ↗</a>`).join("")}</div>` : ""}
     <div class="controls">
       <label class="toggle"><input type="checkbox" id="od" ${onlyDiff?"checked":""}> 違う項目だけ表示（違い${c.diff}件・追加${c.add}件・削除${c.del}件・表記のみ${c.note}件 ／ 全${rows.length}項目）</label>
@@ -556,7 +556,7 @@ function renderModal(){
 function copyText(p, rows, gr){
   const v = (x, m) => x ? resolve(x.value, m) + (x.remark ? `（備考：${x.remark}）` : "") : "（項目なし）";
   let t = `【${p.oldModel} → ${p.newModel} の違い】\n`;
-  if (p.lineup) t += `容量：現行 ${p.lineup.old} ／ 新商品 ${p.lineup.new}\n`;
+  if (p.lineup && !(p.lineup.old === p.oldModel && p.lineup.new === p.newModel)) t += `ラインナップ：現行 ${p.lineup.old} ／ 新商品 ${p.lineup.new}\n`;
   t += "\n" + rows.filter(r => ["diff","add","del"].includes(r.st)).map(r => `■${r.label}（${LABEL[r.st].replace(/^[●＋－] /,"")}）\n　現行：${v(r.a,p.oldModel)}\n　新　：${v(r.b,p.newModel)}${r.hint ? "\n　補足：" + r.hint : ""}`).join("\n");
   const g = gr.filter(r => r.st !== "same");
   if (g.length) t += "\n\n■仕様表の外の注記\n" + g.map(r => `　${r.st==="add" ? "［新型で追加］" : "［新型で削除］"}${r.oldV || r.newV}`).join("\n");
