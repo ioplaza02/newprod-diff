@@ -1,7 +1,28 @@
 {
- "updatedAt": "2026-11-18",
+ "updatedAt": "2026-11-19",
  "keepDays": 60,
  "pairs": [
+  {
+   "id": "sspq-uscb",
+   "date": "2026-11-18",
+   "category": "USB 10Gbps（USB 3.2 Gen2）USB-A＆USB-C™対応 スティックSSD",
+   "oldModel": "SSPQ-USC",
+   "newModel": "SSPQ-USCB",
+   "oldImg": "img/sspq-usc.jpg",
+   "newImg": "img/sspq-uscb.jpg",
+   "how": "rule",
+   "howText": "型番ルール（sspq-uscb → sspq-usc）",
+   "caution": "",
+   "oldUrl": "https://www.iodata.jp/product/hdd/ssd/sspq-usc/spec.htm",
+   "newUrl": "https://www.iodata.jp/product/hdd/ssd/sspq-uscb/spec.htm",
+   "oldPage": "https://www.iodata.jp/product/hdd/ssd/sspq-usc/",
+   "newPage": "https://www.iodata.jp/product/hdd/ssd/sspq-uscb/",
+   "newsUrl": "https://www.iodata.jp/news/2026/newprod/sspq-uscb.htm",
+   "lineup": {
+    "old": "SSPQ-USC250（在庫限り）・SSPQ-USC500（在庫限り）・SSPQ-USC1（在庫限り）・SSPQ-USC2（在庫限り）",
+    "new": "SSPQ-USC250B・SSPQ-USC500B・SSPQ-USC1B・SSPQ-USC2B"
+   }
+  },
   {
    "id": "lcd-u501vx2",
    "date": "2026-11-11",
@@ -257,6 +278,18 @@
  ],
  "unmatched": [
   {
+   "id": "ssk-ezhs",
+   "date": "2026-11-18",
+   "name": "SSK-EZHS",
+   "url": "https://www.iodata.jp/news/2026/newprod/ssk-ezhs.htm"
+  },
+  {
+   "id": "ex-gdq272uel",
+   "date": "2026-11-18",
+   "name": "EX-GDQ272UEL／KH-GDQ272UEL／HT-GDQ272UEL",
+   "url": "https://www.iodata.jp/news/2026/newprod/gdq272uel.htm"
+  },
+  {
    "id": "ex-gd251khb",
    "date": "2026-11-11",
    "name": "EX-GD251KHB／KH-GD251KHB／HT-GD251KHB",
@@ -324,6 +357,80 @@
   }
  ],
  "specs": {
+  "SSPQ-USCB": {
+   "rows": [
+    "動作環境 | USB 10Gbps（USB 3.2 Gen2）／USB 5Gbps（USB 3.2 Gen1）／USB 2.0いずれかのUSB-AまたはUSB-Cコネクターを搭載した機種",
+    "備考 | ※USB 10Gbps（USB 3.2 Gen2）またはUSB 5Gbps（USB 3.2 Gen1）でご使用いただくには、USBポートおよびOS（ドライバー含む）がUSB 10Gbps（USB 3.2 Gen2）またはUSB 5Gbps（USB 3.2 Gen1）に対応している必要があります。対応していない場合は、USB 2.0として動作します。",
+    "パソコン | Windowsパソコン、Mac、Chromebook",
+    "テレビ | －",
+    "ゲーム機 | PlayStation®5、PlayStation®5 Pro",
+    "スマートフォン・タブレット | iPhone、iPad、Androidスマートフォン・タブレット",
+    "その他 | －",
+    "備考 | ※すべてのスマートフォン・タブレット等で動作を保証しているわけではありません。 ※隣り合うUSBポートの間隔により、複数ポートを同時にご使用いただけない場合があります。 ※スマートフォンのケース等が干渉し、挿し込みにくい場合は、ケース等を取り外してご使用ください。",
+    "対応OS （日本語版のみ） | Windows 11 Windows 10 macOS 14以降 iOS 17以降 iPadOS 17以降 Android 14以降 ChromeOS",
+    "備考 | ※macOSでは、フォーマット時、ディスクユーティリティで「すべてのデバイスを表示」を選択してください。詳細は こちら をご参照ください。 ※ChromeOSは常に最新版をご利用ください。OSのサポートが終了した環境では正常にご利用いただけない場合があります。OSのサポート期間の確認方法は こちら ※対応アプリは、ARM版Windows、Windows Sモードには非対応です。 ※対応アプリの対応OS詳細は、各アプリのダウンロードページをご確認ください。",
+    "インターフェイス | USB 10Gbps（USB 3.2 Gen2）／USB 5Gbps（USB 3.2 Gen1）／USB 2.0",
+    "コネクター形状 | USB-A、USB-C",
+    "定格電圧 | DC5V（USBバスパワー）",
+    "消費電力（Typ） | －",
+    "出荷時フォーマット | exFAT",
+    "最大転送速度 > 読み込み | 約1,050MB/s",
+    "最大転送速度 > 書き込み | 250GB：約500MB/s 500GB、1TB、2TB：約900MB/s",
+    "外形寸法（本体のみ） （W×D×H） | 約20×78×7.8mm",
+    "質量（本体のみ） | 約12g",
+    "設置条件 | －",
+    "ファン | －",
+    "盗難防止用ホール | －",
+    "使用温度範囲 | 5～35℃",
+    "使用湿度範囲 | 20～80%（結露なきこと）",
+    "各種取得規格・法規制 | RoHS指令準拠（10物質）、VCCI Class B",
+    "付属品 | －",
+    "保証期間 | 1年",
+    "アフターサービス | データ復旧無償サービス",
+    "対応アプリ | I-O DATAハードディスクフォーマッタ、Sync Connect + 、Sync Connect + データ移行マネージャー、DiskRefresher5 SE ※最新情報は、本商品の サポートライブラリページ をご確認ください。",
+    "ご注意 | ※起動用ドライブとしてはご使用いただけません。"
+   ],
+   "num": {},
+   "general": [],
+   "url": "https://www.iodata.jp/product/hdd/ssd/sspq-uscb/spec.htm"
+  },
+  "SSPQ-USC": {
+   "rows": [
+    "動作環境 | USB 10Gbps（USB 3.2 Gen2）／USB 5Gbps（USB 3.2 Gen1）／USB 2.0いずれかのUSB-AまたはUSB-Cコネクターを搭載した機種",
+    "備考 | ※USB 10Gbps（USB 3.2 Gen2）またはUSB 5Gbps（USB 3.2 Gen1）でご使用いただくには、USBポートおよびOS（ドライバー含む）がUSB 10Gbps（USB 3.2 Gen2）またはUSB 5Gbps（USB 3.2 Gen1）に対応している必要があります。対応していない場合は、USB 2.0として動作します。",
+    "パソコン | Windowsパソコン、Mac、Chromebook",
+    "テレビ | －",
+    "ゲーム機 | PlayStation®5、PlayStation®5 Pro",
+    "スマートフォン・タブレット | iPhone、iPad、Androidスマートフォン・タブレット",
+    "その他 | －",
+    "備考 | ※すべてのスマートフォン・タブレット等で動作を保証しているわけではありません。 ※隣り合うUSBポートの間隔により、複数ポートを同時にご使用いただけない場合があります。 ※スマートフォンのケース等が干渉し、挿し込みにくい場合は、ケース等を取り外してご使用ください。",
+    "対応OS （日本語版のみ） | Windows 11 Windows 10 macOS 13～ iOS 17～ iPadOS 16～ Android 14～ ChromeOS",
+    "備考 | ※macOSでは、フォーマット時、ディスクユーティリティで「すべてのデバイスを表示」を選択してください。詳細は こちら をご参照ください。 ※ChromeOSは常に最新版をご利用ください。OSのサポートが終了した環境では正常にご利用いただけない場合があります。OSのサポート期間の確認方法は こちら ※対応アプリは、ARM版Windows、Windows Sモードには非対応です。 ※対応アプリの対応OS詳細は、各アプリのダウンロードページをご確認ください。",
+    "インターフェイス | USB 10Gbps（USB 3.2 Gen2）／USB 5Gbps（USB 3.2 Gen1）／USB 2.0",
+    "コネクター形状 | USB-A、USB-C",
+    "定格電圧 | DC5V（USBバスパワー）",
+    "消費電力（Typ） | －",
+    "出荷時フォーマット | exFAT",
+    "最大転送速度 > 読み込み | 約1,000MB/s",
+    "最大転送速度 > 書き込み | 250GB：約500MB/s 500GB、1TB、2TB：約900MB/s",
+    "外形寸法（本体のみ） （W×D×H） | 約20×78×7.8mm",
+    "質量（本体のみ） | 約12g",
+    "設置条件 | －",
+    "ファン | －",
+    "盗難防止用ホール | －",
+    "使用温度範囲 | 5～35℃",
+    "使用湿度範囲 | 20～80%（結露なきこと）",
+    "各種取得規格・法規制 | RoHS指令準拠（10物質）、VCCI Class B",
+    "付属品 | －",
+    "保証期間 | 1年",
+    "アフターサービス | －",
+    "対応アプリ | I-O DATAハードディスクフォーマッタ、Sync Connect + 、Sync Connect + データ移行マネージャー、DiskRefresher5 SE ※最新情報は、本商品の サポートライブラリページ をご確認ください。",
+    "ご注意 | ※起動用ドライブとしてはご使用いただけません。"
+   ],
+   "num": {},
+   "general": [],
+   "url": "https://www.iodata.jp/product/hdd/ssd/sspq-usc/spec.htm"
+  },
   "LCD-U501VX2": {
    "rows": [
     "型番／筐体色 | LCD-U501VX2／ブラック",
