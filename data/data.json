@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-25",
+ "updatedAt": "2026-11-26",
  "keepDays": 60,
  "pairs": [
   {
@@ -277,6 +277,12 @@
   }
  ],
  "unmatched": [
+  {
+   "id": "hdl2-lh",
+   "date": "2026-11-25",
+   "name": "LAN DISK（HDL2-LH／LAN DISK（HDL4-LHUシリーズ）",
+   "url": "https://www.iodata.jp/news/2026/newprod/hdl-lh.htm"
+  },
   {
    "id": "ssk-ezhs",
    "date": "2026-11-18",
