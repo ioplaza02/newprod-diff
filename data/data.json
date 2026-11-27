@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-26",
+ "updatedAt": "2026-11-27",
  "keepDays": 60,
  "pairs": [
   {
@@ -10,8 +10,8 @@
    "newModel": "SSPQ-USCB",
    "oldImg": "img/sspq-usc.jpg",
    "newImg": "img/sspq-uscb.jpg",
-   "how": "rule",
-   "howText": "型番ルール（sspq-uscb → sspq-usc）",
+   "how": "official",
+   "howText": "旧型ページ備考欄の「後継品SSPQ-USC250B」",
    "caution": "",
    "oldUrl": "https://www.iodata.jp/product/hdd/ssd/sspq-usc/spec.htm",
    "newUrl": "https://www.iodata.jp/product/hdd/ssd/sspq-uscb/spec.htm",
